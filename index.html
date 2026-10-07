@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ペット体重管理</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzdGNzdERCIvPjxlbGxpcHNlIGN4PSIxNSIgY3k9IjE5IiByeD0iOCIgcnk9IjYuNSIgZmlsbD0id2hpdGUiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjEzIiByPSI1IiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik0yNiAxMi41IEwyOC41IDEzIEwyNiAxNCIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNNyAxOSBDNSAxOCA0IDIwIDUgMjIgQzYgMjEgNyAyMSA4IDIyIEM4IDIwIDcgMTkgNyAxOVoiIGZpbGw9IndoaXRlIi8+PHBhdGggZD0iTTE0IDI1IEwxMyAyNy41IE0xMyAyNy41IEwxMiAyNy41IE0xMyAyNy41IEwxNCAyOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNyAyNS41IEwxNiAyOCBNMTYgMjggTDE1IDI4IE0xNiAyOCBMMTcgMjguNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body>
+<div class="app" id="app">
+  <div class="toast" id="toast"></div>
+
+  <div id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">読み込み中…</div>
+  </div>
+
+  <div class="dialog-overlay" id="dialogOverlay">
+    <div class="dialog">
+      <div class="dialog-title">削除しますか？</div>
+      <div class="dialog-msg" id="dialogMsg"></div>
+      <div class="dialog-btns">
+        <button class="dialog-cancel" onclick="closeDialog()">キャンセル</button>
+        <button class="dialog-ok" onclick="confirmDelete()">削除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="panel active" id="panel0">
+      <button class="add-row-btn" onclick="addRow()"><i class="ti ti-plus"></i> 行を追加</button>
+      <div class="dup-warning" id="dupWarning">⚠ 同じ日付の行がすでにあります</div>
+      <div id="weightGroups"></div>
+    </div>
+
+    <div class="panel" id="panel1">
+      <div class="charts-wrap" id="chartsWrap"></div>
+    </div>
+
+    <div class="panel" id="panel2">
+      <div class="vet-list" id="vetList"></div>
+      <div class="add-vet-form">
+        <div class="form-section-title"><i class="ti ti-plus"></i> 通院記録を追加</div>
+        <div class="form-row">
+          <div class="form-col"><label>日付</label><input type="date" id="vetDate"></div>
+          <div class="form-col"><label>費用（円）</label><input type="number" id="vetCost" placeholder="3500"></div>
+        </div>
+        <div class="form-col" style="margin-bottom:8px">
+          <label>治療・検査内容</label>
+          <textarea id="vetNotes" placeholder="定期健診、体重測定、爪切りなど"></textarea>
+        </div>
+        <button class="save-btn" onclick="addVet()"><i class="ti ti-device-floppy"></i> 保存</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel3">
+      <div class="settings-section">
+        <div class="settings-title"><i class="ti ti-paw"></i> ペットの名前</div>
+        <div class="pet-name-rows">
+          <div class="pet-name-row"><label>1羽め</label><input type="text" id="name0" value="ぴっぴ" oninput="onNameInput()"></div>
+          <div class="pet-name-row"><label>2羽め</label><input type="text" id="name1" value="もも" oninput="onNameInput()"></div>
+          <div class="pet-name-row"><label>3羽め</label><input type="text" id="name2" value="きな" oninput="onNameInput()"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title"><i class="ti ti-palette"></i> テーマカラー</div>
+        <div class="color-grid" id="colorGrid"></div>
+        <div class="color-label" id="colorLabel">現在：ラベンダー</div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title"><i class="ti ti-brand-github"></i> GitHub連携（PAT）</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">データの同期にGitHub Personal Access Tokenが必要です。</div>
+        <div style="font-size:13px;margin-bottom:8px">状態：<span id="patStatus">確認中…</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="password" id="patInput" placeholder="ghp_xxxxxxxxxxxx" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text)">
+          <button class="save-btn" style="padding:8px 14px" onclick="savePATFromInput()">保存</button>
+        </div>
+        <button onclick="clearPAT()" style="font-size:12px;color:#E24B4A;background:none;border:none;cursor:pointer;padding:0">PATを削除する</button>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title"><i class="ti ti-database"></i> エクスポート</div>
+        <div class="backup-btns">
+          <button class="backup-btn" onclick="exportCSV()">
+            <i class="ti ti-table-export"></i>
+            <div class="backup-btn-text"><span>CSVエクスポート</span><span class="backup-btn-sub">体重・通院データをCSVで保存</span></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-tabs" role="tablist">
+    <button class="btab active" onclick="switchTab(0)" role="tab"><i class="ti ti-scale"></i>体重記録</button>
+    <button class="btab" onclick="switchTab(1)" role="tab"><i class="ti ti-chart-line"></i>グラフ</button>
+    <button class="btab" onclick="switchTab(2)" role="tab"><i class="ti ti-stethoscope"></i>通院メモ</button>
+    <button class="btab" onclick="switchTab(3)" role="tab"><i class="ti ti-settings"></i>設定</button>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
