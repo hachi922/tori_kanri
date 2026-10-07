@@ -10,6 +10,12 @@
 </head>
 <body>
 <div class="app" id="app">
+  <nav class="bottom-tabs" role="tablist">
+    <button class="btab active" onclick="switchTab(0)" role="tab"><i class="ti ti-scale"></i>体重記録</button>
+    <button class="btab" onclick="switchTab(1)" role="tab"><i class="ti ti-chart-line"></i>グラフ</button>
+    <button class="btab" onclick="switchTab(2)" role="tab"><i class="ti ti-stethoscope"></i>通院メモ</button>
+    <button class="btab" onclick="switchTab(3)" role="tab"><i class="ti ti-settings"></i>設定</button>
+  </nav>
   <div class="toast" id="toast"></div>
 
   <div id="loadingOverlay">
@@ -93,12 +99,6 @@
 
   </div>
 
-  <nav class="bottom-tabs" role="tablist">
-    <button class="btab active" onclick="switchTab(0)" role="tab"><i class="ti ti-scale"></i>体重記録</button>
-    <button class="btab" onclick="switchTab(1)" role="tab"><i class="ti ti-chart-line"></i>グラフ</button>
-    <button class="btab" onclick="switchTab(2)" role="tab"><i class="ti ti-stethoscope"></i>通院メモ</button>
-    <button class="btab" onclick="switchTab(3)" role="tab"><i class="ti ti-settings"></i>設定</button>
-  </nav>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
