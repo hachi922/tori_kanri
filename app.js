@@ -646,22 +646,58 @@ function renderVet() {
       var card = document.createElement('div');
       card.className = 'vet-card';
 
-      var metaHtml = '<span class="vet-type-badge vet-type-' + type.key + '">' +
-        '<i class="ti ' + type.icon + '"></i> ' + type.label + '</span>';
+      // ヘッダー行
+      var hdrDiv = document.createElement('div');
+      hdrDiv.className = 'vet-card-header';
+
+      var dateSpan = document.createElement('span');
+      dateSpan.className = 'vet-date';
+      dateSpan.innerHTML = '<i class="ti ti-calendar" style="font-size:12px"></i> ' + safeDate;
+
+      var rightSpan = document.createElement('span');
+      rightSpan.style.cssText = 'display:flex;align-items:center;gap:6px';
+
+      var badge = document.createElement('span');
+      badge.className = 'vet-type-badge vet-type-' + type.key;
+      badge.innerHTML = '<i class="ti ' + type.icon + '"></i> ' + type.label;
+      rightSpan.appendChild(badge);
+
       if (type.hasCost && v.cost) {
-        metaHtml += '<span class="vet-cost">¥' + (v.cost || 0).toLocaleString() + '</span>';
+        var costSpan = document.createElement('span');
+        costSpan.className = 'vet-cost';
+        costSpan.textContent = '¥' + (v.cost || 0).toLocaleString();
+        rightSpan.appendChild(costSpan);
       }
 
-      card.innerHTML =
-        '<div class="vet-card-header">' +
-          '<span class="vet-date"><i class="ti ti-calendar" style="font-size:12px"></i> ' + safeDate + '</span>' +
-          '<span style="display:flex;align-items:center;gap:6px">' +
-            metaHtml +
-            '<button class="vet-edit" onclick="startEditVet(' + ri + ')" aria-label="編集"><i class="ti ti-pencil"></i></button>' +
-            '<button class="vet-del" onclick="askDelete(\'vet\',' + ri + ',\'' + safeDate + ' の記録を削除します\')" aria-label="削除"><i class="ti ti-x"></i></button>' +
-          '</span>' +
-        '</div>' +
-        (v.notes ? '<div class="vet-notes">' + v.notes.replace(/\n/g, '<br>') + '</div>' : '');
+      var editBtn = document.createElement('button');
+      editBtn.className = 'vet-edit';
+      editBtn.setAttribute('aria-label', '編集');
+      editBtn.innerHTML = '<i class="ti ti-pencil"></i>';
+      (function(idx) {
+        editBtn.addEventListener('click', function() { startEditVet(idx); });
+      })(ri);
+      rightSpan.appendChild(editBtn);
+
+      var delBtn = document.createElement('button');
+      delBtn.className = 'vet-del';
+      delBtn.setAttribute('aria-label', '削除');
+      delBtn.innerHTML = '<i class="ti ti-x"></i>';
+      (function(idx, ds) {
+        delBtn.addEventListener('click', function() { askDelete('vet', idx, ds + ' の記録を削除します'); });
+      })(ri, safeDate);
+      rightSpan.appendChild(delBtn);
+
+      hdrDiv.appendChild(dateSpan);
+      hdrDiv.appendChild(rightSpan);
+      card.appendChild(hdrDiv);
+
+      if (v.notes) {
+        var notesDiv = document.createElement('div');
+        notesDiv.className = 'vet-notes';
+        notesDiv.innerHTML = v.notes.replace(/\n/g, '<br>');
+        card.appendChild(notesDiv);
+      }
+
       body.appendChild(card);
     });
 
