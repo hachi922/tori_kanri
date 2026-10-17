@@ -554,13 +554,16 @@ function refreshCharts() {
 
 // ── Vet / care records ────────────────────────────────────
 var VET_TYPES = [
-  { key: 'vet',   label: '通院',   icon: 'ti-stethoscope', hasCost: true },
-  { key: 'bath',  label: '水浴び', icon: 'ti-droplet',     hasCost: false },
-  { key: 'nail',  label: '爪切り', icon: 'ti-scissors',    hasCost: true  },
-  { key: 'note',  label: '体調メモ',icon: 'ti-notes',     hasCost: false },
-  { key: 'food',  label: '餌購入', icon: 'ti-plant',        hasCost: true  },
-  { key: 'other', label: 'その他', icon: 'ti-star',        hasCost: false },
+  { key: 'vet',    label: '通院',    icon: 'ti-stethoscope', hasCost: true  },
+  { key: 'health', label: '健康診断', icon: 'ti-heart-rate-monitor', hasCost: true  },
+  { key: 'bath',   label: '水浴び',  icon: 'ti-droplet',     hasCost: false },
+  { key: 'nail',   label: '爪切り',  icon: 'ti-scissors',    hasCost: true  },
+  { key: 'note',   label: '体調メモ', icon: 'ti-notes',      hasCost: false },
+  { key: 'food',   label: '餌購入',  icon: 'ti-plant',       hasCost: true  },
+  { key: 'other',  label: 'その他',  icon: 'ti-star',        hasCost: false },
 ];
+
+var vetFilter = 'all'; // 現在のフィルタ
 
 function getVetType(key) {
   return VET_TYPES.find(function(t) { return t.key === key; }) || VET_TYPES[0];
@@ -593,23 +596,66 @@ function onVetTypeChange() {
   if (costRow) costRow.style.display = type.hasCost ? '' : 'none';
 }
 
+function setVetFilter(key) {
+  vetFilter = key;
+  renderVet();
+}
+
+function renderVetFilterBar(container) {
+  var bar = document.createElement('div');
+  bar.className = 'vet-filter-bar';
+
+  // 「すべて」ボタン
+  var allBtn = document.createElement('button');
+  allBtn.className = 'vet-filter-btn' + (vetFilter === 'all' ? ' active' : '');
+  allBtn.textContent = 'すべて';
+  allBtn.onclick = function() { setVetFilter('all'); };
+  bar.appendChild(allBtn);
+
+  // 種別ボタン（実際に記録がある種別のみ）
+  var usedKeys = {};
+  vetData.forEach(function(v) { usedKeys[v.type || 'vet'] = true; });
+  VET_TYPES.forEach(function(t) {
+    if (!usedKeys[t.key]) return;
+    var btn = document.createElement('button');
+    btn.className = 'vet-filter-btn' + (vetFilter === t.key ? ' active' : '');
+    btn.innerHTML = '<i class="ti ' + t.icon + '"></i> ' + t.label;
+    btn.onclick = (function(k) { return function() { setVetFilter(k); }; })(t.key);
+    bar.appendChild(btn);
+  });
+
+  container.appendChild(bar);
+}
+
 function renderVet() {
   var list = document.getElementById('vetList');
   if (!list) return;
 
+  list.innerHTML = '';
+  renderVetFilterBar(list);
+
+  // フィルタ適用
+  var filtered = vetData.map(function(v, i) { return { v: v, i: i }; })
+    .filter(function(item) { return vetFilter === 'all' || (item.v.type || 'vet') === vetFilter; });
+
   // 年単位グループ化
   var byYear = {};
-  vetData.forEach(function(v, i) {
-    var y = normalizeISO(v.date).slice(0, 4);
+  filtered.forEach(function(item) {
+    var y = normalizeISO(item.v.date).slice(0, 4);
     if (!byYear[y]) byYear[y] = [];
-    byYear[y].push({ v: v, i: i });
+    byYear[y].push(item);
   });
 
   var years = Object.keys(byYear).sort(function(a, b) { return b - a; });
   var currentYear = String(new Date().getFullYear());
 
-  list.innerHTML = years.length === 0
-    ? '<p style="font-size:13px;color:var(--text-secondary);padding:4px 0">まだ記録がありません</p>' : '';
+  if (years.length === 0) {
+    var empty = document.createElement('p');
+    empty.style.cssText = 'font-size:13px;color:var(--text-secondary);padding:4px 0';
+    empty.textContent = vetFilter === 'all' ? 'まだ記録がありません' : 'この種別の記録はありません';
+    list.appendChild(empty);
+    return;
+  }
 
   years.forEach(function(year) {
     var items = byYear[year].sort(function(a, b) {
