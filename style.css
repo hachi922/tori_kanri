@@ -296,6 +296,7 @@ td input[type=number] {
 .vet-type-bath  { background: #E0F2FE; color: #0369A1; }
 .vet-type-nail  { background: #FCE7F3; color: #9D174D; }
 .vet-type-note  { background: #FEF3C7; color: #92400E; }
+.vet-type-food  { background: #ECFDF5; color: #065F46; }
 .vet-type-other { background: #F3F4F6; color: #374151; }
 
 .vet-del {
