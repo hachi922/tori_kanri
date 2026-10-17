@@ -278,9 +278,25 @@ td input[type=number] {
   margin-bottom: 5px;
 }
 
-.vet-date { font-size: 13px; font-weight: 500; }
-.vet-cost { font-size: 13px; color: var(--accent); font-weight: 500; }
-.vet-notes { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.vet-date { font-size: 12px; color: var(--text-secondary); }
+.vet-cost { font-size: 12px; color: var(--accent); font-weight: 500; }
+.vet-notes { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; }
+
+.vet-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.vet-type-vet   { background: #EDE9FE; color: #5B21B6; }
+.vet-type-bath  { background: #E0F2FE; color: #0369A1; }
+.vet-type-nail  { background: #FCE7F3; color: #9D174D; }
+.vet-type-note  { background: #FEF3C7; color: #92400E; }
+.vet-type-other { background: #F3F4F6; color: #374151; }
 
 .vet-del {
   background: none;

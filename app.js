@@ -551,38 +551,131 @@ function refreshCharts() {
   }
 }
 
-// ── Vet records ──────────────────────────────────────────
+// ── Vet / care records ────────────────────────────────────
+var VET_TYPES = [
+  { key: 'vet',   label: '通院',   icon: 'ti-stethoscope', hasCost: true },
+  { key: 'bath',  label: '水浴び', icon: 'ti-droplet',     hasCost: false },
+  { key: 'nail',  label: '爪切り', icon: 'ti-scissors',    hasCost: false },
+  { key: 'note',  label: '体調メモ',icon: 'ti-notes',     hasCost: false },
+  { key: 'other', label: 'その他', icon: 'ti-star',        hasCost: false },
+];
+
+function getVetType(key) {
+  return VET_TYPES.find(function(t) { return t.key === key; }) || VET_TYPES[0];
+}
+
+var collapsedVetYears = new Set();
+
+function toggleVetYear(year) {
+  var currentYear = String(new Date().getFullYear());
+  var defaultOpen = (year === currentYear);
+  var manualOpen  = collapsedVetYears.has('open:' + year);
+  var manualClose = collapsedVetYears.has('close:' + year);
+  var nowOpen = manualOpen ? true : manualClose ? false : defaultOpen;
+  collapsedVetYears.delete('open:' + year);
+  collapsedVetYears.delete('close:' + year);
+  if (nowOpen) {
+    collapsedVetYears.add('close:' + year);
+  } else {
+    collapsedVetYears.add('open:' + year);
+  }
+  renderVet();
+}
+
+function onVetTypeChange() {
+  var sel = document.getElementById('vetType');
+  if (!sel) return;
+  var key  = sel.value;
+  var type = getVetType(key);
+  var costRow = document.getElementById('vetCostRow');
+  if (costRow) costRow.style.display = type.hasCost ? '' : 'none';
+}
+
 function renderVet() {
-  var list   = document.getElementById('vetList');
-  var sorted = vetData.slice().sort(function(a, b) {
-    return normalizeISO(b.date).localeCompare(normalizeISO(a.date));
+  var list = document.getElementById('vetList');
+  if (!list) return;
+
+  // 年単位グループ化
+  var byYear = {};
+  vetData.forEach(function(v, i) {
+    var y = normalizeISO(v.date).slice(0, 4);
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push({ v: v, i: i });
   });
-  list.innerHTML = sorted.length === 0
-    ? '<p style="font-size:13px;color:var(--text-secondary)">まだ記録がありません</p>' : '';
-  sorted.forEach(function(v) {
-    var ri       = vetData.indexOf(v);
-    var safeDate = normalizeISO(v.date).replace(/-/g, '/');
-    var card     = document.createElement('div');
-    card.className = 'vet-card';
-    card.innerHTML =
-      '<div class="vet-card-header">' +
-        '<span class="vet-date"><i class="ti ti-calendar" style="font-size:13px"></i> ' + safeDate + '</span>' +
-        '<span style="display:flex;align-items:center;gap:8px">' +
-          '<span class="vet-cost">¥' + v.cost.toLocaleString() + '</span>' +
-          '<button class="vet-del" onclick="askDelete(\'vet\',' + ri + ',\'' + safeDate + ' の通院記録を削除します\')" aria-label="削除"><i class="ti ti-x"></i></button>' +
-        '</span>' +
-      '</div>' +
-      '<div class="vet-notes">' + v.notes.replace(/\n/g, '<br>') + '</div>';
-    list.appendChild(card);
+
+  var years = Object.keys(byYear).sort(function(a, b) { return b - a; });
+  var currentYear = String(new Date().getFullYear());
+
+  list.innerHTML = years.length === 0
+    ? '<p style="font-size:13px;color:var(--text-secondary);padding:4px 0">まだ記録がありません</p>' : '';
+
+  years.forEach(function(year) {
+    var items = byYear[year].sort(function(a, b) {
+      return normalizeISO(b.v.date).localeCompare(normalizeISO(a.v.date));
+    });
+
+    var manualOpen  = collapsedVetYears.has('open:' + year);
+    var manualClose = collapsedVetYears.has('close:' + year);
+    var isOpen = manualOpen ? true : manualClose ? false : (year === currentYear);
+
+    var group = document.createElement('div');
+    group.className = 'year-group';
+
+    var hdr = document.createElement('div');
+    hdr.className = 'year-header';
+    hdr.onclick = function() { toggleVetYear(year); };
+    hdr.innerHTML =
+      '<span class="year-label">' + year + '年</span>' +
+      '<span style="display:flex;align-items:center;gap:8px">' +
+        '<span class="year-meta">' + items.length + '件</span>' +
+        '<i class="ti ti-chevron-down year-chevron' + (isOpen ? ' open' : '') + '"></i>' +
+      '</span>';
+    group.appendChild(hdr);
+
+    var body = document.createElement('div');
+    body.className = 'year-body' + (isOpen ? '' : ' collapsed');
+    body.style.maxHeight = isOpen ? '9999px' : '0px';
+
+    items.forEach(function(item) {
+      var v  = item.v;
+      var ri = item.i;
+      var safeDate = normalizeISO(v.date).replace(/-/g, '/');
+      var type = getVetType(v.type || 'vet');
+      var card = document.createElement('div');
+      card.className = 'vet-card';
+
+      var metaHtml = '<span class="vet-type-badge vet-type-' + type.key + '">' +
+        '<i class="ti ' + type.icon + '"></i> ' + type.label + '</span>';
+      if (type.hasCost && v.cost) {
+        metaHtml += '<span class="vet-cost">¥' + (v.cost || 0).toLocaleString() + '</span>';
+      }
+
+      card.innerHTML =
+        '<div class="vet-card-header">' +
+          '<span class="vet-date"><i class="ti ti-calendar" style="font-size:12px"></i> ' + safeDate + '</span>' +
+          '<span style="display:flex;align-items:center;gap:6px">' +
+            metaHtml +
+            '<button class="vet-del" onclick="askDelete(\'vet\',' + ri + ',\'' + safeDate + ' の記録を削除します\')" aria-label="削除"><i class="ti ti-x"></i></button>' +
+          '</span>' +
+        '</div>' +
+        (v.notes ? '<div class="vet-notes">' + v.notes.replace(/\n/g, '<br>') + '</div>' : '');
+      body.appendChild(card);
+    });
+
+    group.appendChild(body);
+    list.appendChild(group);
   });
 }
 
 function addVet() {
-  var d = document.getElementById('vetDate').value;
-  var c = parseInt(document.getElementById('vetCost').value) || 0;
-  var n = document.getElementById('vetNotes').value.trim();
+  var d    = document.getElementById('vetDate').value;
+  var type = (document.getElementById('vetType') || {}).value || 'vet';
+  var c    = parseInt(document.getElementById('vetCost').value) || 0;
+  var n    = document.getElementById('vetNotes').value.trim();
   if (!d) { showToast('日付を入力してください'); return; }
-  vetData.push({ date: d, cost: c, notes: n });
+  var entry = { date: d, type: type, notes: n };
+  if (getVetType(type).hasCost) entry.cost = c;
+  vetData.push(entry);
   document.getElementById('vetDate').value  = '';
   document.getElementById('vetCost').value  = '';
   document.getElementById('vetNotes').value = '';
