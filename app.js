@@ -25,6 +25,7 @@ let charts      = [null, null, null];
 let currentColorIdx = 0;
 let collapsedYears  = new Set();
 let pendingDelete   = null;
+let editingVetIdx   = null; // 編集中のvetData index
 
 // ── PAT helpers ───────────────────────────────────────────
 function getPAT() {
@@ -656,6 +657,7 @@ function renderVet() {
           '<span class="vet-date"><i class="ti ti-calendar" style="font-size:12px"></i> ' + safeDate + '</span>' +
           '<span style="display:flex;align-items:center;gap:6px">' +
             metaHtml +
+            '<button class="vet-edit" onclick="startEditVet(' + ri + ')" aria-label="編集"><i class="ti ti-pencil"></i></button>' +
             '<button class="vet-del" onclick="askDelete(\'vet\',' + ri + ',\'' + safeDate + ' の記録を削除します\')" aria-label="削除"><i class="ti ti-x"></i></button>' +
           '</span>' +
         '</div>' +
@@ -668,6 +670,41 @@ function renderVet() {
   });
 }
 
+function startEditVet(ri) {
+  var v = vetData[ri];
+  if (!v) return;
+  editingVetIdx = ri;
+
+  // フォームに値をセット
+  document.getElementById('vetDate').value  = normalizeISO(v.date);
+  var sel = document.getElementById('vetType');
+  if (sel) sel.value = v.type || 'vet';
+  onVetTypeChange();
+  document.getElementById('vetCost').value  = v.cost || '';
+  document.getElementById('vetNotes').value = v.notes || '';
+
+  // ボタンを「更新」表示に変える
+  var btn = document.querySelector('.add-vet-form .save-btn');
+  if (btn) btn.innerHTML = '<i class="ti ti-device-floppy"></i> 更新';
+  var title = document.querySelector('.form-section-title');
+  if (title) title.innerHTML = '<i class="ti ti-pencil"></i> メモを編集';
+
+  // フォームまでスクロール
+  var form = document.querySelector('.add-vet-form');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditVet() {
+  editingVetIdx = null;
+  document.getElementById('vetDate').value  = '';
+  document.getElementById('vetCost').value  = '';
+  document.getElementById('vetNotes').value = '';
+  var btn = document.querySelector('.add-vet-form .save-btn');
+  if (btn) btn.innerHTML = '<i class="ti ti-device-floppy"></i> 保存';
+  var title = document.querySelector('.form-section-title');
+  if (title) title.innerHTML = '<i class="ti ti-plus"></i> メモを追加';
+}
+
 function addVet() {
   var d    = document.getElementById('vetDate').value;
   var type = (document.getElementById('vetType') || {}).value || 'vet';
@@ -676,13 +713,26 @@ function addVet() {
   if (!d) { showToast('日付を入力してください'); return; }
   var entry = { date: d, type: type, notes: n };
   if (getVetType(type).hasCost) entry.cost = c;
-  vetData.push(entry);
+
+  if (editingVetIdx !== null) {
+    // 更新モード
+    vetData[editingVetIdx] = entry;
+    editingVetIdx = null;
+    var btn = document.querySelector('.add-vet-form .save-btn');
+    if (btn) btn.innerHTML = '<i class="ti ti-device-floppy"></i> 保存';
+    var title = document.querySelector('.form-section-title');
+    if (title) title.innerHTML = '<i class="ti ti-plus"></i> メモを追加';
+    showToast('更新しました');
+  } else {
+    vetData.push(entry);
+    showToast('保存しました');
+  }
+
   document.getElementById('vetDate').value  = '';
   document.getElementById('vetCost').value  = '';
   document.getElementById('vetNotes').value = '';
   renderVet();
   saveAll();
-  showToast('保存しました');
 }
 
 // ── Tab switching ─────────────────────────────────────────
