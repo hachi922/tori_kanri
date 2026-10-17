@@ -556,7 +556,7 @@ function refreshCharts() {
 var VET_TYPES = [
   { key: 'vet',   label: '通院',   icon: 'ti-stethoscope', hasCost: true },
   { key: 'bath',  label: '水浴び', icon: 'ti-droplet',     hasCost: false },
-  { key: 'nail',  label: '爪切り', icon: 'ti-scissors',    hasCost: false },
+  { key: 'nail',  label: '爪切り', icon: 'ti-scissors',    hasCost: true  },
   { key: 'note',  label: '体調メモ',icon: 'ti-notes',     hasCost: false },
   { key: 'food',  label: '餌購入', icon: 'ti-plant',        hasCost: true  },
   { key: 'other', label: 'その他', icon: 'ti-star',        hasCost: false },
